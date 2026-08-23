@@ -159,4 +159,22 @@ class SecurityController extends AbstractController
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
+
+    #[Route('/account/delete', name: 'delete_account', methods: ['DELETE'])]
+    public function deleteAccount(): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse(
+                ['message' => 'Utilisateur non authentifié'],
+                Response::HTTP_UNAUTHORIZED
+            );
+        }
+
+        $this->manager->remove($user);
+        $this->manager->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 }
