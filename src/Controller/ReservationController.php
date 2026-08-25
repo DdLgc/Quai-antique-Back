@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Reservation;
 use App\Entity\User;
 use App\Repository\ReservationRepository;
+use App\Repository\RestaurantRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,6 +18,7 @@ class ReservationController extends AbstractController
     public function __construct(
         private EntityManagerInterface $manager,
         private ReservationRepository $repository,
+        private RestaurantRepository $restaurantRepository,
     ) {
     }
 
@@ -60,6 +62,39 @@ class ReservationController extends AbstractController
         if ($guestNumber < 1) {
             return new JsonResponse(
                 ['message' => 'Le nombre de convives doit être supérieur à zéro'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $restaurant = $this->restaurantRepository->find(1);
+
+        if (!$restaurant) {
+            return new JsonResponse(
+                ['message' => 'Restaurant introuvable'],
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        if ($guestNumber > $restaurant->getMaxGuest()) {
+            return new JsonResponse(
+                [
+                    'message' => sprintf(
+                        'Le nombre maximal de convives est de %d',
+                        $restaurant->getMaxGuest()
+                    )
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $availableTimes = array_merge(
+            $restaurant->getAmOpeningTime(),
+            $restaurant->getPmOpeningTime()
+        );
+
+        if (!in_array($data['time'], $availableTimes, true)) {
+            return new JsonResponse(
+                ['message' => 'Créneau horaire invalide'],
                 Response::HTTP_BAD_REQUEST
             );
         }
