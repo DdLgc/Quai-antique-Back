@@ -118,9 +118,22 @@ class SecurityController extends AbstractController
     {
         $user = $this->getUser();
 
-        $responseData = $this->serializer->serialize($user, 'json');
+        if (!$user instanceof User) {
+            return new JsonResponse(
+                ['message' => 'Utilisateur non authentifié'],
+                Response::HTTP_UNAUTHORIZED
+            );
+        }
 
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        return new JsonResponse([
+            'id' => $user->getId(),
+            'firstName' => $user->getFirstName(),
+            'lastName' => $user->getLastName(),
+            'email' => $user->getEmail(),
+            'guestNumber' => $user->getGuestNumber(),
+            'allergy' => $user->getAllergy(),
+            'roles' => $user->getRoles(),
+        ], Response::HTTP_OK);
     }
 
     #[Route('/account/edit', name: 'edit', methods: 'PUT')]
