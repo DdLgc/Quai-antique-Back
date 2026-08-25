@@ -23,8 +23,25 @@ class RestaurantFixtures extends Fixture
             $restaurant = (new Restaurant())
                 ->setName("Restaurant n°$i")
                 ->setDescription($faker->text())
-                ->setAmOpeningTime([])
-                ->setPmOpeningTime([])
+                ->setAmOpeningTime([
+                    '12:00',
+                    '12:15',
+                    '12:30',
+                    '12:45',
+                    '13:00',
+                    '13:15',
+                ])
+                ->setPmOpeningTime([
+                    '19:00',
+                    '19:15',
+                    '19:30',
+                    '19:45',
+                    '20:00',
+                    '20:15',
+                    '20:30',
+                    '20:45',
+                    '21:00',
+                ])
                 ->setMaxGuest(random_int(10, 50))
                 ->setCreatedAt(new DateTimeImmutable());
 
