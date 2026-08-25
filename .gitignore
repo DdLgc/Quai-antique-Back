@@ -21,3 +21,6 @@
 
 .vscode/
 .idea/
+
+/public/uploads/gallery/*
+!/public/uploads/gallery/.gitkeep
