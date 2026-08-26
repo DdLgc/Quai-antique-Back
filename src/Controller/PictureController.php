@@ -65,6 +65,16 @@ class PictureController extends AbstractController
             );
         }
 
+        if (!$image->isValid()) {
+            return new JsonResponse(
+                [
+                    'message' => 'Le fichier envoyé est invalide',
+                    'uploadError' => $image->getErrorMessage(),
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
         $allowedMimeTypes = [
             'image/jpeg',
             'image/png',
