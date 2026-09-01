@@ -22,8 +22,6 @@ class Menu
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 6, scale: 2)]
-    private ?string $price = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -31,12 +29,13 @@ class Menu
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: Dish::class, orphanRemoval: true)]
-    private Collection $dishes;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: Formula::class, orphanRemoval: true)]
+    private Collection $formulas;
 
     public function __construct()
     {
-        $this->dishes = new ArrayCollection();
+        $this->formulas = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -127,6 +126,36 @@ class Menu
         if ($this->dishes->removeElement($dish)) {
             if ($dish->getMenu() === $this) {
                 $dish->setMenu(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Formula>
+     */
+    public function getFormulas(): Collection
+    {
+        return $this->formulas;
+    }
+
+    public function addFormula(Formula $formula): static
+    {
+        if (!$this->formulas->contains($formula)) {
+            $this->formulas->add($formula);
+            $formula->setMenu($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFormula(Formula $formula): static
+    {
+        if ($this->formulas->removeElement($formula)) {
+            // set the owning side to null (unless already changed)
+            if ($formula->getMenu() === $this) {
+                $formula->setMenu(null);
             }
         }
 

@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Dish;
 use App\Repository\DishRepository;
-use App\Repository\MenuRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,50 +13,57 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/dishes', name: 'app_api_dish_')]
 class DishController extends AbstractController
 {
+    private const CATEGORIES = ['starter', 'main', 'dessert'];
+
     public function __construct(
         private DishRepository $repository,
-        private MenuRepository $menuRepository,
         private EntityManagerInterface $manager,
     ) {
+    }
+
+    #[Route(methods: ['GET'])]
+    public function list(): JsonResponse
+    {
+        $dishes = $this->repository->findAll();
+
+        $data = array_map(
+            static fn (Dish $dish) => [
+                'id' => $dish->getId(),
+                'name' => $dish->getName(),
+                'description' => $dish->getDescription(),
+                'category' => $dish->getCategory(),
+                'price' => $dish->getPrice(),
+            ],
+            $dishes
+        );
+
+        return new JsonResponse($data, Response::HTTP_OK);
     }
 
     #[Route(methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
         $data = $request->toArray();
 
-        if (
-            empty($data['name']) ||
-            empty($data['category']) ||
-            !isset($data['menuId'])
-        ) {
+        if (empty($data['name']) || empty($data['category']) || !isset($data['price'])) {
             return new JsonResponse(
-                ['message' => 'Nom, catégorie et menu obligatoires'],
+                ['message' => 'Nom, catégorie et prix obligatoires'],
                 Response::HTTP_BAD_REQUEST
             );
         }
 
-        $allowedCategories = [
-            'starter',
-            'main',
-            'dessert',
-        ];
-
-        if (!in_array($data['category'], $allowedCategories, true)) {
+        if (!in_array($data['category'], self::CATEGORIES, true)) {
             return new JsonResponse(
                 ['message' => 'Catégorie invalide'],
                 Response::HTTP_BAD_REQUEST
             );
         }
 
-        $menu = $this->menuRepository->find((int) $data['menuId']);
-
-        if (!$menu) {
+        if (!is_numeric($data['price']) || (float) $data['price'] <= 0) {
             return new JsonResponse(
-                ['message' => 'Menu introuvable'],
-                Response::HTTP_NOT_FOUND
+                ['message' => 'Prix invalide'],
+                Response::HTTP_BAD_REQUEST
             );
         }
 
@@ -65,29 +71,25 @@ class DishController extends AbstractController
             ->setName(trim($data['name']))
             ->setDescription($data['description'] ?? null)
             ->setCategory($data['category'])
-            ->setMenu($menu)
+            ->setPrice((string) $data['price'])
             ->setCreatedAt(new DateTimeImmutable());
 
         $this->manager->persist($dish);
         $this->manager->flush();
 
-        return new JsonResponse(
-            [
-                'id' => $dish->getId(),
-                'name' => $dish->getName(),
-                'description' => $dish->getDescription(),
-                'category' => $dish->getCategory(),
-                'menuId' => $dish->getMenu()?->getId(),
-            ],
-            Response::HTTP_CREATED
-        );
+        return new JsonResponse([
+            'id' => $dish->getId(),
+            'name' => $dish->getName(),
+            'description' => $dish->getDescription(),
+            'category' => $dish->getCategory(),
+            'price' => $dish->getPrice(),
+        ], Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', name: 'edit', methods: ['PUT'])]
     public function edit(int $id, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
         $dish = $this->repository->find($id);
 
         if (!$dish) {
@@ -108,13 +110,7 @@ class DishController extends AbstractController
         }
 
         if (isset($data['category'])) {
-            $allowedCategories = [
-                'starter',
-                'main',
-                'dessert',
-            ];
-
-            if (!in_array($data['category'], $allowedCategories, true)) {
+            if (!in_array($data['category'], self::CATEGORIES, true)) {
                 return new JsonResponse(
                     ['message' => 'Catégorie invalide'],
                     Response::HTTP_BAD_REQUEST
@@ -124,40 +120,33 @@ class DishController extends AbstractController
             $dish->setCategory($data['category']);
         }
 
-        if (isset($data['menuId'])) {
-            $menu = $this->menuRepository->find((int) $data['menuId']);
-
-            if (!$menu) {
+        if (isset($data['price'])) {
+            if (!is_numeric($data['price']) || (float) $data['price'] <= 0) {
                 return new JsonResponse(
-                    ['message' => 'Menu introuvable'],
-                    Response::HTTP_NOT_FOUND
+                    ['message' => 'Prix invalide'],
+                    Response::HTTP_BAD_REQUEST
                 );
             }
 
-            $dish->setMenu($menu);
+            $dish->setPrice((string) $data['price']);
         }
 
         $dish->setUpdatedAt(new DateTimeImmutable());
-
         $this->manager->flush();
 
-        return new JsonResponse(
-            [
-                'id' => $dish->getId(),
-                'name' => $dish->getName(),
-                'description' => $dish->getDescription(),
-                'category' => $dish->getCategory(),
-                'menuId' => $dish->getMenu()?->getId(),
-            ],
-            Response::HTTP_OK
-        );
+        return new JsonResponse([
+            'id' => $dish->getId(),
+            'name' => $dish->getName(),
+            'description' => $dish->getDescription(),
+            'category' => $dish->getCategory(),
+            'price' => $dish->getPrice(),
+        ], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
         $dish = $this->repository->find($id);
 
         if (!$dish) {

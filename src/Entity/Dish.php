@@ -29,9 +29,8 @@ class Dish
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'dishes')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Menu $menu = null;
+    #[ORM\Column(type: Types::DECIMAL, precision: 6, scale: 2)]
+    private ?string $price = null;
 
     public function getId(): ?int
     {
@@ -98,14 +97,14 @@ class Dish
         return $this;
     }
 
-    public function getMenu(): ?Menu
+    public function getPrice(): ?string
     {
-        return $this->menu;
+        return $this->price;
     }
 
-    public function setMenu(?Menu $menu): static
+    public function setPrice(string $price): static
     {
-        $this->menu = $menu;
+        $this->price = $price;
 
         return $this;
     }

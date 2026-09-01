@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Entity\Menu;
@@ -28,15 +29,13 @@ class MenuController extends AbstractController
                 'id' => $menu->getId(),
                 'name' => $menu->getName(),
                 'description' => $menu->getDescription(),
-                'price' => $menu->getPrice(),
-                'dishes' => array_map(
-                    static fn ($dish) => [
-                        'id' => $dish->getId(),
-                        'name' => $dish->getName(),
-                        'description' => $dish->getDescription(),
-                        'category' => $dish->getCategory(),
+                'formulas' => array_map(
+                    static fn ($formula) => [
+                        'id' => $formula->getId(),
+                        'description' => $formula->getDescription(),
+                        'price' => $formula->getPrice(),
                     ],
-                    $menu->getDishes()->toArray()
+                    $menu->getFormulas()->toArray()
                 ),
             ],
             $menus
@@ -49,22 +48,11 @@ class MenuController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
         $data = $request->toArray();
 
-        if (
-            empty($data['name']) ||
-            !isset($data['price'])
-        ) {
+        if (empty($data['name'])) {
             return new JsonResponse(
-                ['message' => 'Nom et prix obligatoires'],
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
-        if (!is_numeric($data['price']) || (float) $data['price'] <= 0) {
-            return new JsonResponse(
-                ['message' => 'Prix invalide'],
+                ['message' => 'Nom obligatoire'],
                 Response::HTTP_BAD_REQUEST
             );
         }
@@ -72,28 +60,23 @@ class MenuController extends AbstractController
         $menu = (new Menu())
             ->setName(trim($data['name']))
             ->setDescription($data['description'] ?? null)
-            ->setPrice((string) $data['price'])
             ->setCreatedAt(new DateTimeImmutable());
 
         $this->manager->persist($menu);
         $this->manager->flush();
 
-        return new JsonResponse(
-            [
-                'id' => $menu->getId(),
-                'name' => $menu->getName(),
-                'description' => $menu->getDescription(),
-                'price' => $menu->getPrice(),
-            ],
-            Response::HTTP_CREATED
-        );
+        return new JsonResponse([
+            'id' => $menu->getId(),
+            'name' => $menu->getName(),
+            'description' => $menu->getDescription(),
+            'formulas' => [],
+        ], Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', name: 'edit', methods: ['PUT'])]
     public function edit(int $id, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
         $menu = $this->repository->find($id);
 
         if (!$menu) {
@@ -113,26 +96,13 @@ class MenuController extends AbstractController
             $menu->setDescription($data['description']);
         }
 
-        if (isset($data['price'])) {
-            if (!is_numeric($data['price']) || (float) $data['price'] <= 0) {
-                return new JsonResponse(
-                    ['message' => 'Prix invalide'],
-                    Response::HTTP_BAD_REQUEST
-                );
-            }
-
-            $menu->setPrice((string) $data['price']);
-        }
-
         $menu->setUpdatedAt(new DateTimeImmutable());
-
         $this->manager->flush();
 
         return new JsonResponse([
             'id' => $menu->getId(),
             'name' => $menu->getName(),
             'description' => $menu->getDescription(),
-            'price' => $menu->getPrice(),
         ], Response::HTTP_OK);
     }
 
@@ -140,7 +110,6 @@ class MenuController extends AbstractController
     public function delete(int $id): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
         $menu = $this->repository->find($id);
 
         if (!$menu) {
