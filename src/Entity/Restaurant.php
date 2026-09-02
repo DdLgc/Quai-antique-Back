@@ -90,6 +90,19 @@ class Restaurant
     {
         return $this->pmOpeningTime;
     }
+    #[ORM\Column]
+    private array $weeklyOpeningHours = [];
+    public function getWeeklyOpeningHours(): array
+    {
+        return $this->weeklyOpeningHours;
+    }
+
+    public function setWeeklyOpeningHours(array $weeklyOpeningHours): static
+    {
+        $this->weeklyOpeningHours = $weeklyOpeningHours;
+
+        return $this;
+    }
 
     public function setPmOpeningTime(array $pmOpeningTime): static
     {

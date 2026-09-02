@@ -42,6 +42,36 @@ class RestaurantFixtures extends Fixture
                     '20:45',
                     '21:00',
                 ])
+                ->setWeeklyOpeningHours([
+                    'monday' => [
+                        'am' => ['12:00', '14:00'],
+                        'pm' => ['19:00', '22:00'],
+                    ],
+                    'tuesday' => [
+                        'am' => ['12:00', '14:00'],
+                        'pm' => ['19:00', '22:00'],
+                    ],
+                    'wednesday' => [
+                        'am' => null,
+                        'pm' => null,
+                    ],
+                    'thursday' => [
+                        'am' => ['12:00', '14:00'],
+                        'pm' => ['19:00', '22:00'],
+                    ],
+                    'friday' => [
+                        'am' => ['12:00', '14:00'],
+                        'pm' => ['19:00', '22:30'],
+                    ],
+                    'saturday' => [
+                        'am' => ['12:00', '14:30'],
+                        'pm' => ['19:00', '22:30'],
+                    ],
+                    'sunday' => [
+                        'am' => ['12:00', '14:30'],
+                        'pm' => null,
+                    ],
+                ])
                 ->setMaxGuest(random_int(10, 50))
                 ->setCreatedAt(new DateTimeImmutable());
 

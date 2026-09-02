@@ -179,6 +179,60 @@ class RestaurantController extends AbstractController
      *     )
      * )
      */
+    #[Route('/{id}/opening-hours', name: 'opening_hours', methods: 'GET')]
+    public function openingHours(int $id): JsonResponse
+    {
+        $restaurant = $this->repository->find($id);
+
+        if (!$restaurant) {
+            return new JsonResponse(
+                ['message' => 'Restaurant introuvable'],
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        return new JsonResponse([
+            'openingHours' => $restaurant->getWeeklyOpeningHours(),
+        ]);
+    }
+
+    #[Route('/{id}/opening-hours', name: 'edit_opening_hours', methods: 'PUT')]
+    public function editOpeningHours(int $id, Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $restaurant = $this->repository->find($id);
+
+        if (!$restaurant) {
+            return new JsonResponse(
+                ['message' => 'Restaurant introuvable'],
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (
+            !is_array($data) ||
+            !isset($data['openingHours']) ||
+            !is_array($data['openingHours'])
+        ) {
+            return new JsonResponse(
+                ['message' => 'Horaires invalides'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $restaurant
+            ->setWeeklyOpeningHours($data['openingHours'])
+            ->setUpdatedAt(new DateTimeImmutable());
+
+        $this->manager->flush();
+
+        return new JsonResponse([
+            'openingHours' => $restaurant->getWeeklyOpeningHours(),
+        ]);
+    }
     #[Route('/{id}', name: 'delete', methods: 'DELETE')]
     public function delete(int $id): JsonResponse
     {
