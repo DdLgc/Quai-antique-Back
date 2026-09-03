@@ -27,7 +27,7 @@ class Reservation
     private ?string $allergy = null;
 
     #[ORM\ManyToOne(inversedBy: 'reservations')]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $user = null;
 
     public function getId(): ?int
@@ -93,5 +93,32 @@ class Reservation
         $this->user = $user;
 
         return $this;
+    }
+    #[Route('/{id}/capacity', name: 'update_capacity', methods: ['PUT'])]
+    public function updateCapacity(
+        Restaurant $restaurant,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $data = json_decode($request->getContent(), true);
+        $maxGuest = (int) ($data['maxGuest'] ?? 0);
+
+        if ($maxGuest < 1) {
+            return new JsonResponse(
+                ['message' => 'La capacité doit être supérieure à 0'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $restaurant->setMaxGuest($maxGuest);
+
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'message' => 'Capacité mise à jour',
+            'maxGuest' => $restaurant->getMaxGuest()
+        ]);
     }
 }
