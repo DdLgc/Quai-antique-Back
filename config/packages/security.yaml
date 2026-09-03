@@ -38,6 +38,8 @@ security:
          - { path: ^/api/menus$, roles: PUBLIC_ACCESS, methods: [ GET ] }
          - { path: ^/api/dishes$, roles: PUBLIC_ACCESS, methods: [ GET ] }
          - { path: ^/api/restaurant/\d+/opening-hours$, roles: PUBLIC_ACCESS, methods: [ GET ] }
+         - { path: ^/api/reservations$, roles: PUBLIC_ACCESS, methods: [ POST ] }
+         - { path: ^/api/reservations/availability$, roles: PUBLIC_ACCESS, methods: [ GET ] }
          - { path: ^/api, roles: ROLE_USER }
 
 when@test:

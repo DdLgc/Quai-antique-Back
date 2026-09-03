@@ -246,4 +246,40 @@ class RestaurantController extends AbstractController
 
         return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
+    #[Route('/{id}/capacity', name: 'update_capacity', methods: ['PUT'])]
+    public function updateCapacity(
+        int $id,
+        Request $request,
+        RestaurantRepository $restaurantRepository,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $restaurant = $restaurantRepository->find($id);
+
+        if (!$restaurant) {
+            return new JsonResponse(
+                ['message' => 'Restaurant introuvable'],
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $maxGuest = (int) ($data['maxGuest'] ?? 0);
+
+        if ($maxGuest < 1) {
+            return new JsonResponse(
+                ['message' => 'La capacité doit être supérieure à 0'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $restaurant->setMaxGuest($maxGuest);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'message' => 'Capacité mise à jour',
+            'maxGuest' => $restaurant->getMaxGuest(),
+        ]);
+    }
 }
