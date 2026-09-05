@@ -53,17 +53,60 @@ class SecurityController extends AbstractController
      */
     public function register(Request $request): JsonResponse
     {
-        $user = $this->serializer->deserialize($request->getContent(), User::class, 'json');
-        $user->setPassword($this->passwordHasher->hashPassword($user, $user->getPassword()));
-        $user->setCreatedAt(new DateTimeImmutable());
+        $data = $request->toArray();
+
+        if (
+            empty($data['firstName']) ||
+            empty($data['lastName']) ||
+            empty($data['email']) ||
+            empty($data['password'])
+        ) {
+            return new JsonResponse(
+                ['message' => 'Les champs obligatoires sont manquants'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $guestNumber = isset($data['guestNumber'])
+            ? (int) $data['guestNumber']
+            : null;
+
+        if ($guestNumber !== null && $guestNumber < 1) {
+            return new JsonResponse(
+                ['message' => 'Le nombre de convives doit être supérieur à 0'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $allergy = isset($data['allergy'])
+            ? trim((string) $data['allergy'])
+            : null;
+
+        $user = new User();
+
+        $user
+            ->setFirstName(trim($data['firstName']))
+            ->setLastName(trim($data['lastName']))
+            ->setEmail(trim($data['email']))
+            ->setGuestNumber($guestNumber)
+            ->setAllergy($allergy !== '' ? $allergy : null)
+            ->setCreatedAt(new DateTimeImmutable());
+
+        $user->setPassword(
+            $this->passwordHasher->hashPassword(
+                $user,
+                $data['password']
+            )
+        );
 
         $this->manager->persist($user);
         $this->manager->flush();
 
-        return new JsonResponse(
-            ['user'  => $user->getUserIdentifier(), 'apiToken' => $user->getApiToken(), 'roles' => $user->getRoles()],
-            Response::HTTP_CREATED
-        );
+        return new JsonResponse([
+            'user' => $user->getUserIdentifier(),
+            'apiToken' => $user->getApiToken(),
+            'roles' => $user->getRoles(),
+        ], Response::HTTP_CREATED);
     }
 
     #[Route('/login', name: 'login', methods: 'POST')]
