@@ -99,14 +99,19 @@ class RestaurantController extends AbstractController
     #[Route('/{id}', name: 'show', methods: 'GET')]
     public function show(int $id): JsonResponse
     {
-        $restaurant = $this->repository->findOneBy(['id' => $id]);
-        if ($restaurant) {
-            $responseData = $this->serializer->serialize($restaurant, 'json');
+        $restaurant = $this->repository->find($id);
 
-            return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        if (!$restaurant) {
+            return new JsonResponse(
+                ['message' => 'Restaurant introuvable'],
+                Response::HTTP_NOT_FOUND
+            );
         }
 
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        return new JsonResponse([
+            'id' => $restaurant->getId(),
+            'maxGuest' => $restaurant->getMaxGuest(),
+        ]);
     }
 
     /** @OA\Put(
